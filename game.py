@@ -2,6 +2,7 @@ import pygame
 import time
 import sys
 from settings import *
+from sprites import BG
 
 
 class Game:
@@ -11,11 +12,20 @@ class Game:
         pygame.init()
         self.display_surface = pygame.display.set_mode(
             (WINDOW_WIDTH, WINDOW_HEIGHT))
-        pygame.display.set_caption('Flying Plane')
+        pygame.display.set_caption('Flappy Bird Clone')
         self.clock = pygame.time.Clock()
 
+        # sprite groups
         self.all_sprites = pygame.sprite.Group()
         self.collision_sprites = pygame.sprite.Group()
+
+        # scale factor
+        bg_height = pygame.image.load(
+            './graphics/environment/background.png').get_height()
+        self.scale_factor = WINDOW_HEIGHT / bg_height
+
+        # sprite setup
+        BG(self.all_sprites, self.scale_factor)
 
     def run(self):
         last_time = time.time()
@@ -32,5 +42,8 @@ class Game:
                     sys.exit()
 
             # game logic
+            self.display_surface.fill('black')
+            self.all_sprites.update(dt)
+            self.all_sprites.draw(self.display_surface)
             pygame.display.update()
             self.clock.tick(FRAMERATE)
