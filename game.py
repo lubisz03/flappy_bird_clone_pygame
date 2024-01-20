@@ -7,7 +7,6 @@ from sprites import BG, Ground, Plane, Obstacle
 
 class Game:
     def __init__(self):
-
         # setup
         pygame.init()
         self.display_surface = pygame.display.set_mode(
@@ -30,14 +29,15 @@ class Game:
         Ground([self.all_sprites, self.collision_sprites], self.scale_factor)
         self.plane = Plane(self.all_sprites, self.scale_factor / 1.7)
 
-        # timer
-        self.obstacle_timer = pygame.USEREVENT + 1
-        pygame.time.set_timer(self.obstacle_timer, 1400)
-
         # text
         self.font = pygame.font.Font(
             './graphics/font/BD_Cartoon_Shout.ttf', 30)
         self.score = 0
+
+        # timer
+        self.obstacle_timer = pygame.USEREVENT + 1
+        pygame.time.set_timer(self.obstacle_timer,
+                              int(1400 * 0.95**self.score))
 
         # menu
         self.menu_surf = pygame.image.load(
@@ -46,14 +46,28 @@ class Game:
         self.menu_rect = self.menu_surf.get_rect(
             center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
 
+        # sound
+        self.bg_sound = pygame.mixer.Sound('./sounds/music.wav')
+        self.bg_sound.set_volume(0.1)
+        self.bg_sound.play(loops=-1)
+
     def collisions(self):
         if pygame.sprite.spritecollide(self.plane, self.collision_sprites, False, pygame.sprite.collide_mask)\
                 or self.plane.rect.top <= 0:
+            for sprite in self.collision_sprites.sprites():
+                if sprite.sprite_type == 'obstacle':
+                    sprite.kill()
             self.active = False
+            self.plane.kill()
 
     def display_score(self):
         if self.active:
-            self.score = pygame.time.get_ticks() // 1000
+            for sprite in self.collision_sprites.sprites():
+                if sprite.sprite_type == 'obstacle':
+                    if self.plane.rect.left > sprite.rect.right and not sprite.scored:
+                        self.score += 1
+                        sprite.scored = True
+            # self.score = pygame.time.get_ticks() // 1000
             y = WINDOW_HEIGHT / 10
         else:
             y = WINDOW_HEIGHT / 2 + (self.menu_rect.height / 1.5)
@@ -66,7 +80,6 @@ class Game:
     def run(self):
         last_time = time.time()
         while True:
-
             # delta time
             dt = time.time() - last_time
             last_time = time.time()
@@ -81,17 +94,19 @@ class Game:
                         if self.active:
                             self.plane.jump()
                         else:
+                            self.plane = Plane(
+                                self.all_sprites, self.scale_factor / 1.7)
                             self.active = True
-                if event.type == self.obstacle_timer:
+                            self.score = 0
+                if event.type == self.obstacle_timer and self.active:
                     Obstacle([self.all_sprites, self.collision_sprites],
                              self.scale_factor * 1.1)
 
             # game logic
             self.display_surface.fill('black')
-
             self.all_sprites.draw(self.display_surface)
             self.display_score()
-            self.all_sprites.update(dt)
+            self.all_sprites.update(dt, self.score)
 
             if self.active:
                 self.collisions()

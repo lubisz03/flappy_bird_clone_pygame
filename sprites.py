@@ -21,8 +21,8 @@ class BG(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(0, 0))
         self.pos = pygame.math.Vector2(self.rect.topleft)
 
-    def update(self, dt):
-        self.pos.x -= 300 * dt
+    def update(self, dt, score):
+        self.pos.x -= 300 * 1.02**score * dt
         if self.rect.centerx <= 0:
             self.pos.x = 0
         self.rect.x = round(self.pos.x)
@@ -31,6 +31,7 @@ class BG(pygame.sprite.Sprite):
 class Ground(pygame.sprite.Sprite):
     def __init__(self, groups, scale_factor):
         super().__init__(groups)
+        self.sprite_type = 'ground'
 
         # image
         ground_surf = pygame.image.load(
@@ -46,8 +47,8 @@ class Ground(pygame.sprite.Sprite):
         # mask
         self.mask = pygame.mask.from_surface(self.image)
 
-    def update(self, dt):
-        self.pos.x -= 360 * dt
+    def update(self, dt, score):
+        self.pos.x -= 360 * 1.02**score * dt
         if self.rect.centerx <= 0:
             self.pos.x = 0
         self.rect.x = round(self.pos.x)
@@ -74,6 +75,10 @@ class Plane(pygame.sprite.Sprite):
         # mask
         self.mask = pygame.mask.from_surface(self.image)
 
+        # sound
+        self.jump_sound = pygame.mixer.Sound('./sounds/jump.wav')
+        self.jump_sound.set_volume(0.3)
+
     def import_frames(self, scale_factor):
         self.frames = []
         for i in range(3):
@@ -89,6 +94,7 @@ class Plane(pygame.sprite.Sprite):
         self.rect.y = round(self.pos.y)
 
     def jump(self):
+        self.jump_sound.play()
         self.direction = -350
 
     def animate(self, dt):
@@ -103,7 +109,7 @@ class Plane(pygame.sprite.Sprite):
         self.image = rotated_plane
         self.mask = pygame.mask.from_surface(self.image)
 
-    def update(self, dt):
+    def update(self, dt, score):
         self.apply_gravity(dt)
         self.animate(dt)
         self.rotate()
@@ -112,6 +118,8 @@ class Plane(pygame.sprite.Sprite):
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, groups, scale_factor):
         super().__init__(groups)
+        self.sprite_type = 'obstacle'
+        self.scored = False
 
         orientation = choice(('up', 'down'))
         surf = pygame.image.load(
@@ -135,8 +143,8 @@ class Obstacle(pygame.sprite.Sprite):
         # mask
         self.mask = pygame.mask.from_surface(self.image)
 
-    def update(self, dt):
-        self.pos.x -= 400 * dt
+    def update(self, dt, score):
+        self.pos.x -= 400 * 1.02**score * dt
         self.rect.x = round(self.pos.x)
         if self.rect.right <= - 100:
             self.kill()
