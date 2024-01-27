@@ -116,6 +116,7 @@ venv.bak/
 # macOS-specific files
 .DS_Store
 
-# Pygame-specific files (if any custom files or folders used)
-# Add your custom Pygame-related files or directories here
+# PyDoc Documentation
+script.py
+*.html
 
